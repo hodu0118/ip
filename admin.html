@@ -357,10 +357,17 @@
       document.getElementById('dashboard').classList.add('show');
       document.getElementById('userEmail').textContent = session.user.email;
       document.getElementById('hideBotToggle').checked = localStorage.getItem('hideBotVisits') === '1';
+      // 주소창에 남은 access_token 등 노출 방지: URL을 깔끔하게 정리
+      if (window.location.hash || window.location.search.includes('access_token')) {
+        history.replaceState(null, '', window.location.pathname);
+      }
       loadVisits();
     } else if (session && session.user) {
       // 로그인은 했지만 관리자 계정이 아님
       document.getElementById('deniedMsg').style.display = 'block';
+      if (window.location.hash || window.location.search.includes('access_token')) {
+        history.replaceState(null, '', window.location.pathname);
+      }
       await sb.auth.signOut();
     }
   }
