@@ -104,6 +104,26 @@
     <div class="footer-note">ipapi.co 기반 조회</div>
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = 'https://sofajxssivrdqpucwjkp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvZmFqeHNzaXZyZHFwdWN3amtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1NjMyNzQsImV4cCI6MjEwMzEzOTI3NH0.YXyDBOTGnOtK7fTjRa49XebNkeXU31yx0rVp2bNUJqQ';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  async function logVisit(ip, loc, isp) {
+    try {
+      await sb.from('visits').insert({
+        ip: ip || null,
+        location: loc || null,
+        isp: isp || null,
+        user_agent: navigator.userAgent
+      });
+    } catch (e) {
+      // 기록 저장 실패해도 화면 표시엔 영향 없음
+      console.error('visit log failed', e);
+    }
+  }
+</script>
 <script>
   let currentIp = '';
 
@@ -153,6 +173,7 @@
       document.getElementById('ip').textContent = currentIp;
       document.getElementById('loc').textContent = result.loc || '조회 불가';
       document.getElementById('isp').textContent = result.isp || '조회 불가';
+      logVisit(result.ip, result.loc, result.isp);
     } else {
       document.getElementById('ip').textContent = '조회 실패';
       document.getElementById('loc').textContent = '-';
