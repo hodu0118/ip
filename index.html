@@ -89,6 +89,14 @@
     font-size: 11px;
     color: #55556b;
   }
+  .admin-link {
+    display: block;
+    margin-top: 14px;
+    font-size: 11px;
+    color: #45455a;
+    text-decoration: none;
+  }
+  .admin-link:hover { color: #7dd3fc; }
 </style>
 </head>
 <body>
@@ -102,6 +110,7 @@
     </div>
     <button class="copy-btn" onclick="copyIp()">IP 복사하기</button>
     <div class="footer-note">ipapi.co 기반 조회</div>
+    <a href="/admin.html" class="admin-link">관리자</a>
   </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
