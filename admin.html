@@ -257,7 +257,9 @@
   const SUPABASE_URL = 'https://sofajxssivrdqpucwjkp.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvZmFqeHNzaXZyZHFwdWN3amtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1NjMyNzQsImV4cCI6MjEwMzEzOTI3NH0.YXyDBOTGnOtK7fTjRa49XebNkeXU31yx0rVp2bNUJqQ';
   const ADMIN_EMAIL = 'taeorange79@gmail.com';
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { flowType: 'pkce' }
+  });
 
   let allVisits = [];
 
@@ -288,9 +290,10 @@
   }
 
   async function loginWithGoogle() {
+    const cleanUrl = window.location.origin + window.location.pathname;
     await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.href }
+      options: { redirectTo: cleanUrl }
     });
   }
 
@@ -357,15 +360,15 @@
       document.getElementById('dashboard').classList.add('show');
       document.getElementById('userEmail').textContent = session.user.email;
       document.getElementById('hideBotToggle').checked = localStorage.getItem('hideBotVisits') === '1';
-      // 주소창에 남은 access_token 등 노출 방지: URL을 깔끔하게 정리
-      if (window.location.hash || window.location.search.includes('access_token')) {
+      // 주소창에 남은 access_token/code 등 노출 방지: URL을 깔끔하게 정리
+      if (window.location.hash || window.location.search) {
         history.replaceState(null, '', window.location.pathname);
       }
       loadVisits();
     } else if (session && session.user) {
       // 로그인은 했지만 관리자 계정이 아님
       document.getElementById('deniedMsg').style.display = 'block';
-      if (window.location.hash || window.location.search.includes('access_token')) {
+      if (window.location.hash || window.location.search) {
         history.replaceState(null, '', window.location.pathname);
       }
       await sb.auth.signOut();
