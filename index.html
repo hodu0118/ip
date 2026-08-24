@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>내 IP 확인</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 20% 20%, #1a1a2e, #0d0d15 70%);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Pretendard', sans-serif;
+    color: #eaeaf0;
+  }
+  .card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 48px 56px;
+    text-align: center;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    min-width: 320px;
+  }
+  .label {
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: #8a8aa3;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .ip {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(135deg, #7dd3fc, #a78bfa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    word-break: break-all;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .divider {
+    width: 40px;
+    height: 2px;
+    background: rgba(255,255,255,0.15);
+    margin: 24px auto;
+  }
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #b4b4c8;
+    margin-bottom: 8px;
+    gap: 24px;
+  }
+  .info-row span:first-child { color: #71718f; }
+  .info-row span:last-child { font-weight: 500; color: #eaeaf0; }
+  .copy-btn {
+    margin-top: 24px;
+    background: rgba(125, 211, 252, 0.12);
+    border: 1px solid rgba(125, 211, 252, 0.3);
+    color: #7dd3fc;
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { background: rgba(125, 211, 252, 0.2); }
+  .copy-btn:active { transform: scale(0.97); }
+  .spinner {
+    width: 24px; height: 24px;
+    border: 3px solid rgba(255,255,255,0.15);
+    border-top-color: #7dd3fc;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .footer-note {
+    margin-top: 20px;
+    font-size: 11px;
+    color: #55556b;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="label">Your IP Address</div>
+    <div class="ip" id="ip"><div class="spinner"></div></div>
+    <div class="divider"></div>
+    <div id="details">
+      <div class="info-row"><span>위치</span><span id="loc">불러오는 중...</span></div>
+      <div class="info-row"><span>통신사/ISP</span><span id="isp">불러오는 중...</span></div>
+    </div>
+    <button class="copy-btn" onclick="copyIp()">IP 복사하기</button>
+    <div class="footer-note">ipapi.co 기반 조회</div>
+  </div>
+
+<script>
+  let currentIp = '';
+
+  async function tryIpwho() {
+    const res = await fetch('https://ipwho.is/');
+    const data = await res.json();
+    if (!data.success && data.success !== undefined) throw new Error('ipwho failed');
+    return {
+      ip: data.ip,
+      loc: [data.city, data.region, data.country].filter(Boolean).join(' '),
+      isp: data.connection && data.connection.isp
+    };
+  }
+
+  async function tryIpapi() {
+    const res = await fetch('https://ipapi.co/json/');
+    const data = await res.json();
+    if (data.error) throw new Error('ipapi failed');
+    return {
+      ip: data.ip,
+      loc: [data.city, data.region, data.country_name].filter(Boolean).join(' '),
+      isp: data.org
+    };
+  }
+
+  async function tryIpify() {
+    const res = await fetch('https://api.ipify.org?format=json');
+    const data = await res.json();
+    return { ip: data.ip, loc: null, isp: null };
+  }
+
+  async function loadIp() {
+    const providers = [tryIpwho, tryIpapi, tryIpify];
+    let result = null;
+
+    for (const provider of providers) {
+      try {
+        result = await provider();
+        if (result && result.ip) break;
+      } catch (e) {
+        continue;
+      }
+    }
+
+    if (result && result.ip) {
+      currentIp = result.ip;
+      document.getElementById('ip').textContent = currentIp;
+      document.getElementById('loc').textContent = result.loc || '조회 불가';
+      document.getElementById('isp').textContent = result.isp || '조회 불가';
+    } else {
+      document.getElementById('ip').textContent = '조회 실패';
+      document.getElementById('loc').textContent = '-';
+      document.getElementById('isp').textContent = '-';
+    }
+  }
+
+  function copyIp() {
+    if (!currentIp) return;
+    navigator.clipboard.writeText(currentIp).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      const original = btn.textContent;
+      btn.textContent = '복사됨!';
+      setTimeout(() => btn.textContent = original, 1200);
+    });
+  }
+
+  loadIp();
+</script>
+</body>
+</html>
